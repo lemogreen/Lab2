@@ -1,10 +1,8 @@
-//Jeff Chastine
 #include "GL/glut.h" 
 #include <vector> 
 
 using namespace std;
-
-GLint Width = 512, Height = 512; 
+GLint Width = 512, Height = 512;
 GLubyte ColorR = 255, ColorG = 255, ColorB = 255;
 
 struct type_point
@@ -13,21 +11,15 @@ struct type_point
 	type_point(GLint _x, GLint _y) { x = _x; y = _y; }
 };
 
-void changeViewPort(int w, int h)
-{
-	glViewport(0, 0, w, h);
-}
-
-vector<type_point> Points;
+vector <type_point> Points;
 /* Функция вывода на экран */
 
 void Display(void)
 {
 	glClearColor(0.5, 0.5, 0.5, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3ub(ColorR, ColorG, ColorB);
-	glPointSize(6); 
-	glEnable(GL_POINT_SMOOTH);
+	glPointSize(6); glEnable(GL_POINT_SMOOTH);
 	glBegin(GL_POINTS);
 	for (int i = 0; i < Points.size(); i++)
 		glVertex2i(Points[i].x, Points[i].y);
@@ -48,7 +40,8 @@ void Reshape(GLint w, GLint h)
 }
 
 /* Функция обработки сообщений от клавиатуры */
-void Keyboard(unsigned char key, int x, int y) {
+void Keyboard(unsigned char key, int x, int y)
+{
 	int i, n = Points.size();
 	/* Изменение RGB-компонент цвета точек */
 	if (key == 'r') ColorR += 5;
@@ -79,12 +72,9 @@ void Mouse(int button, int state, int x, int y)
 }
 /* Головная программа */
 void main(int argc, char* argv[])
-
 {
 	glutInit(&argc, argv);
-	// Set up some memory buffers for our display
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	// Set the window size
+	glutInitDisplayMode(GLUT_RGB);
 	glutInitWindowSize(Width, Height);
 	glutCreateWindow("Рисуем точки");
 	glutDisplayFunc(Display);
