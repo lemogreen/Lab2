@@ -9,26 +9,6 @@
 
 using namespace std;
 
-void glColorHex(string _hex)
-{
-	if (!(_hex.length() == 6 || (_hex.length() == 7 && _hex[0] == '#')))
-		throw new exception("Illegal color format");
-
-	int start = (_hex[0] == '#') ? 1 : 0;
-	float color[3] = { 0, 0, 0 };
-	for (int i = 0; i < 3; i++)
-	{
-		unsigned int x;
-		stringstream ss;
-		ss << std::hex << _hex.substr(start + i * 2, 2);
-		ss >> x;
-		if (x > 255)
-			throw new exception("Too big color hex");
-		color[i] = (float)x / 255;
-	}
-	glColor3f(color[0], color[1], color[2]);
-}
-
 struct type_point
 {
 	GLint x, y, z;
@@ -61,7 +41,27 @@ vector<ratio> tempRatios = {};
 vector<type_point> trajectory = {};
 vector<ratio> ratios = {};
 
-bool karkas = true;
+bool isSkeletonViewEnabled = true;
+
+void glColorHex(string _hex)
+{
+	if (!(_hex.length() == 6 || (_hex.length() == 7 && _hex[0] == '#')))
+		throw new exception("Illegal color format");
+
+	int start = (_hex[0] == '#') ? 1 : 0;
+	float color[3] = { 0, 0, 0 };
+	for (int i = 0; i < 3; i++)
+	{
+		unsigned int x;
+		stringstream ss;
+		ss << std::hex << _hex.substr(start + i * 2, 2);
+		ss >> x;
+		if (x > 255)
+			throw new exception("Too big color hex");
+		color[i] = (float)x / 255;
+	}
+	glColor3f(color[0], color[1], color[2]);
+}
 
 void ReadModel(string triangle_path, string trajectory_path, string params_path)
 {
@@ -226,7 +226,7 @@ void Display() {
 		trajectory[0].y,
 		trajectory[0].z
 	);
-	glBegin((karkas) ? GL_LINE_LOOP : GL_TRIANGLES);
+	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glColorHex("#91edea");
 	glVertex3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
 	glVertex3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
@@ -241,7 +241,7 @@ void Display() {
 			trajectory[i].z - trajectory[i - 1].z
 		);
 
-		glBegin((karkas) ? GL_LINE_LOOP : GL_QUADS);
+		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
 		glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
 		glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
 
@@ -257,7 +257,7 @@ void Display() {
 		);
 		glEnd();
 
-		glBegin((karkas) ? GL_LINE_LOOP : GL_QUADS);
+		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
 		glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
 		glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
 		glVertex3f(
@@ -272,7 +272,7 @@ void Display() {
 		);
 		glEnd();
 
-		glBegin((karkas) ? GL_LINE_LOOP : GL_QUADS);
+		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
 		glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
 		glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
 		glVertex3f(
@@ -290,7 +290,7 @@ void Display() {
 		glTranslatef(delta.x, delta.y, delta.z);
 	}
 
-	glBegin((karkas) ? GL_LINE_LOOP : GL_TRIANGLES);
+	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glVertex3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
 	glVertex3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
 	glVertex3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
@@ -336,7 +336,7 @@ void Keyboard(unsigned char key, int x, int y)
 	if (key == 'q') spectator.y -= speed;
 	if (key == 'e') spectator.y += speed;
 
-	if (key == 'k') karkas = !karkas;
+	if (key == 'k') isSkeletonViewEnabled = !isSkeletonViewEnabled;
 
 	cout << key << endl;
 	glutPostRedisplay();
