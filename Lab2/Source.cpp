@@ -42,6 +42,7 @@ vector<type_point> trajectory = {};
 vector<ratio> ratios = {};
 
 bool isSkeletonViewEnabled = true;
+bool isPerspectiveViewEnabled = true;
 
 void glColorHex(string _hex)
 {
@@ -157,15 +158,6 @@ void GenerateModel()
 			/ (tempRatios[j].percent - ratios.back().percent);
 		ratios.push_back(ratio(percentsPassed, kx, ky, kz));
 		i++;
-
-		/*if (percentsPassed < tempRatios[j].percent)
-		{
-
-		}
-		else
-		{
-
-		}*/
 	}
 }
 
@@ -313,18 +305,10 @@ void Reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integ
 	glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
 	glLoadIdentity();             // Reset
 
-	gluPerspective(45.0f, aspect, 0.1f, 5000);
-	// glOrtho(0, width, 0, height, 0, 5000);
-
-	// Set up orthographic projection view [NEW]
-	//if (width >= height) {
-		// aspect >= 1, set the height from -1 to 1, with larger width
-	//glOrtho(-3.0 * aspect, 3.0 * aspect, -3.0, 3.0, 0.1, 100);
-	//}
-	//else {
-		// aspect < 1, set the width to -1 to 1, with larger height
-		//glOrtho(-3.0, 3.0, -3.0 / aspect, 3.0 / aspect, 0.1, 100);
-	//}
+	if (isPerspectiveViewEnabled)
+		gluPerspective(45.0f, aspect, 0.1f, 5000);
+	else
+		glOrtho(-width / 2, width / 2, -height / 2, height / 2, -5000, 5000);
 }
 
 void Keyboard(unsigned char key, int x, int y)
@@ -337,6 +321,11 @@ void Keyboard(unsigned char key, int x, int y)
 	if (key == 'e') spectator.y += speed;
 
 	if (key == 'k') isSkeletonViewEnabled = !isSkeletonViewEnabled;
+	if (key == 'p')
+	{
+		isPerspectiveViewEnabled = !isPerspectiveViewEnabled;
+		Reshape(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+	}
 
 	cout << key << endl;
 	glutPostRedisplay();
