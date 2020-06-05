@@ -346,7 +346,6 @@ void Keyboard(unsigned char key, int x, int y)
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);            // Initialize GLUT
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA); // enable depth buffer and double buffered mode
-	glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
 	glutInitWindowSize(640, 480);   // Set the window's initial width & height
 	glutInitWindowPosition(200, 100); // Position the window's initial top-left corner
 	glutCreateWindow("lab2");          // Create window with the given title
