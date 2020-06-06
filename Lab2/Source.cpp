@@ -1,4 +1,5 @@
-﻿#include <windows.h>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #include <GL/glut.h>
 #include <sstream>
 #include <iostream>
@@ -42,6 +43,7 @@ vector<type_point> trajectory = {};
 vector<ratio> ratios = {};
 
 int light_sample = 2;
+bool isTexturingEnabled = true;
 bool isSkeletonViewEnabled = true;
 bool isPerspectiveViewEnabled = true;
 
@@ -140,6 +142,43 @@ void glColorHex(string _hex)
 		color[i] = (float)x / 255;
 	}
 	glColor3f(color[0], color[1], color[2]);
+}
+
+GLuint LoadTexture(const char* filename)
+{
+	GLuint texture;
+	int width, height;
+	unsigned char* data;
+
+	FILE* file;
+	file = fopen(filename, "rb");
+
+	if (file == NULL) return 0;
+	width = 1024;
+	height = 512;
+	data = (unsigned char*)malloc(width * height * 3);
+	//int size = fseek(file,);
+	fread(data, width * height * 3, 1, file);
+	fclose(file);
+
+	for (int i = 0; i < width * height; ++i)
+	{
+		int index = i * 3;
+		unsigned char B, R;
+		B = data[index];
+		R = data[index + 2];
+
+		data[index] = R;
+		data[index + 2] = B;
+	}
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+	free(data);
+
+	return texture;
 }
 
 void ReadModel(string triangle_path, string trajectory_path, string params_path)
@@ -244,6 +283,9 @@ void initGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
 	glClearDepth(1.0f);                   // Set background depth to farthest
 	glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
+	LoadTexture("1.bmp");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	//умножение
 	glDepthFunc(GL_LEQUAL);    // Set the type of depth-test
 	glShadeModel(GL_SMOOTH);   // Enable smooth shading
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Nice perspective corrections
@@ -253,8 +295,9 @@ void initGL() {
    whenever the window needs to be re-painted. */
 void Display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
-
 	glEnable(GL_LIGHTING);
+	if (isTexturingEnabled) glEnable(GL_TEXTURE_2D);
+
 	glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
 
 	// Render a color-cube consisting of 6 quads with different colors
@@ -301,9 +344,9 @@ void Display() {
 	);
 	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glColorHex("#91edea");
-	glVertex3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
-	glVertex3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
-	glVertex3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
+	glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
+	glTexCoord2f(.05, .1); glVertex3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
+	glTexCoord2f(.1, 0); glVertex3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
 	glEnd();
 
 	for (int i = 1; i < trajectory.size(); i++)
@@ -315,15 +358,15 @@ void Display() {
 		);
 
 		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
-		glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
-		glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+		glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+		glTexCoord2f(.1, .1); glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
 
-		glVertex3f(
+		glTexCoord2f(.1, 0); glVertex3f(
 			triangle.points[1].x * ratios[i].kx + delta.x,
 			triangle.points[1].y * ratios[i].ky + delta.y,
 			triangle.points[1].z + delta.z
 		);
-		glVertex3f(
+		glTexCoord2f(0, 0); glVertex3f(
 			triangle.points[0].x * ratios[i].kx + delta.x,
 			triangle.points[0].y * ratios[i].ky + delta.y,
 			triangle.points[0].z + delta.z
@@ -331,14 +374,14 @@ void Display() {
 		glEnd();
 
 		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
-		glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
-		glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
-		glVertex3f(
+		glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+		glTexCoord2f(.1, .1); glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+		glTexCoord2f(.1, 0); glVertex3f(
 			triangle.points[2].x * ratios[i].kx + delta.x,
 			triangle.points[2].y * ratios[i].ky + delta.y,
 			triangle.points[2].z + delta.z
 		);
-		glVertex3f(
+		glTexCoord2f(0, 0); glVertex3f(
 			triangle.points[0].x * ratios[i].kx + delta.x,
 			triangle.points[0].y * ratios[i].ky + delta.y,
 			triangle.points[0].z + delta.z
@@ -346,14 +389,14 @@ void Display() {
 		glEnd();
 
 		glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_QUADS);
-		glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
-		glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
-		glVertex3f(
+		glTexCoord2f(0, .1); glVertex3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+		glTexCoord2f(.1, .1); glVertex3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+		glTexCoord2f(.1, 0); glVertex3f(
 			triangle.points[2].x * ratios[i].kx + delta.x,
 			triangle.points[2].y * ratios[i].ky + delta.y,
 			triangle.points[2].z + delta.z
 		);
-		glVertex3f(
+		glTexCoord2f(0, 0); glVertex3f(
 			triangle.points[1].x * ratios[i].kx + delta.x,
 			triangle.points[1].y * ratios[i].ky + delta.y,
 			triangle.points[1].z + delta.z
@@ -364,9 +407,9 @@ void Display() {
 	}
 
 	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
-	glVertex3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
-	glVertex3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
-	glVertex3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
+	glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
+	glTexCoord2f(.05, .1); glVertex3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
+	glTexCoord2f(.1, 0); glVertex3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
 	glEnd();
 
 	//отключить все источники
@@ -375,6 +418,10 @@ void Display() {
 	glDisable(GL_LIGHT2);
 	glDisable(GL_LIGHT3);
 	glDisable(GL_LIGHT4);
+
+
+	//отключить текстурирование
+	glDisable(GL_TEXTURE_2D);
 
 	glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
 }
@@ -415,16 +462,13 @@ void Keyboard(unsigned char key, int x, int y)
 		Reshape(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
 	}
 
-	if (key == '1')
-		light_sample = 1;
-	if (key == '2')
-		light_sample = 2;
-	if (key == '3')
-		light_sample = 3;
-	if (key == '4')
-		light_sample = 4;
-	if (key == '5')
-		light_sample = 5;
+	if (key == 't') isTexturingEnabled = !isTexturingEnabled;
+
+	if (key == '1') light_sample = 1;
+	if (key == '2') light_sample = 2;
+	if (key == '3') light_sample = 3;
+	if (key == '4') light_sample = 4;
+	if (key == '5') light_sample = 5;
 
 	cout << key << endl;
 	glutPostRedisplay();
