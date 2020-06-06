@@ -41,8 +41,86 @@ vector<ratio> tempRatios = {};
 vector<type_point> trajectory = {};
 vector<ratio> ratios = {};
 
+int light_sample = 2;
 bool isSkeletonViewEnabled = true;
 bool isPerspectiveViewEnabled = true;
+
+void CreateLight()
+{
+	GLfloat ambience[4] = { 0.1f, 0.1f, 0.1f, 1.0 };	//Цвет мирового света
+	GLfloat material_diffuse[] = { 0.15, 0.15, 0.15, 1 };
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, material_diffuse);
+	glEnable(GL_COLOR_MATERIAL);
+	if (light_sample == 1)
+	{
+		//направленный источник света
+		//находится в бесконечности и свет от него распространяется в заданном направлении
+		GLfloat light0_diffuse[] = { 0.4, 0.7, 0.2 };
+
+		GLfloat light0_direction[] = { 0.0, 0.0, 1.0, 0.0 };
+		glEnable(GL_LIGHT0);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, ambience);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+		glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+	}
+	if (light_sample == 2)
+	{
+		//точечный источник света
+		//убывание интенсивности с расстоянием
+		//отключено (по умолчанию)
+		GLfloat light1_diffuse[] = { 0.4, 0.7, 0.2 };
+
+		GLfloat light1_position[] = { 0.0, 0.0, 1.0, 1.0 };
+		glEnable(GL_LIGHT1);
+		glLightfv(GL_LIGHT1, GL_AMBIENT, ambience);
+		glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+	}
+	if (light_sample == 3)
+	{
+		//точечный источник света
+		//убывание интенсивности с расстоянием
+		GLfloat light2_diffuse[] = { 0.4, 0.7, 0.2 };
+		GLfloat light2_position[] = { 1.0, 1.0, 1.0, 1.0 };
+		glEnable(GL_LIGHT2);
+		glLightfv(GL_LIGHT2, GL_AMBIENT, ambience);
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, light2_diffuse);
+		glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
+		glLightf(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 0);
+		glLightf(GL_LIGHT2, GL_LINEAR_ATTENUATION, 0.04);
+		glLightf(GL_LIGHT2, GL_QUADRATIC_ATTENUATION, 0.04);
+	}
+	if (light_sample == 4)
+	{
+		//прожектор
+		//убывание интенсивности с расстоянием
+		//отключено (по умолчанию)
+		GLfloat light3_diffuse[] = { 0.4, 0.7, 0.2 };
+		GLfloat light3_position[] = { 0.0, 0.0, 1.0, 1.0 };
+		GLfloat light3_spot_direction[] = { 0.0, 0.0, -1.0 };
+		glEnable(GL_LIGHT3);
+		glLightfv(GL_LIGHT3, GL_AMBIENT, ambience);
+		glLightfv(GL_LIGHT3, GL_DIFFUSE, light3_diffuse);
+		glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
+		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 50);
+		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, light3_spot_direction);
+	}
+	if (light_sample == 5)
+	{
+		//прожектор
+		//включен рассчет убывания интенсивности для прожектора
+		GLfloat light4_diffuse[] = { 0.4, 0.7, 0.2 };
+		GLfloat light4_position[] = { 0.0, 0.0, 1.0, 1.0 };
+		GLfloat light4_spot_direction[] = { 0.0, 0.0, -1.0 };
+		glEnable(GL_LIGHT4);
+		glLightfv(GL_LIGHT4, GL_AMBIENT, ambience);
+		glLightfv(GL_LIGHT4, GL_DIFFUSE, light4_diffuse);
+		glLightfv(GL_LIGHT4, GL_POSITION, light4_position);
+		glLightf(GL_LIGHT4, GL_SPOT_CUTOFF, 50);
+		glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, light4_spot_direction);
+		glLightf(GL_LIGHT4, GL_SPOT_EXPONENT, 15.0);
+	}
+}
 
 void glColorHex(string _hex)
 {
@@ -176,6 +254,7 @@ void initGL() {
 void Display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
 
+	glEnable(GL_LIGHTING);
 	glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
 
 	// Render a color-cube consisting of 6 quads with different colors
@@ -186,6 +265,8 @@ void Display() {
 		0, 0, 0,
 		0, 100, 0
 	);
+
+	CreateLight();
 
 	// Координатные оси XYZ
 	glLineWidth(4);
@@ -288,6 +369,13 @@ void Display() {
 	glVertex3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
 	glEnd();
 
+	//отключить все источники
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHT1);
+	glDisable(GL_LIGHT2);
+	glDisable(GL_LIGHT3);
+	glDisable(GL_LIGHT4);
+
 	glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
 }
 
@@ -327,6 +415,17 @@ void Keyboard(unsigned char key, int x, int y)
 		Reshape(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
 	}
 
+	if (key == '1')
+		light_sample = 1;
+	if (key == '2')
+		light_sample = 2;
+	if (key == '3')
+		light_sample = 3;
+	if (key == '4')
+		light_sample = 4;
+	if (key == '5')
+		light_sample = 5;
+
 	cout << key << endl;
 	glutPostRedisplay();
 }
@@ -353,3 +452,5 @@ int main(int argc, char** argv) {
 	glutMainLoop();                 // Enter the infinite event-processing loop
 	return 0;
 }
+
+
