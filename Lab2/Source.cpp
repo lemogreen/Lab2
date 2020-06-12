@@ -376,6 +376,8 @@ void GenerateModel()
 }
 
 void calculateNormals(int i) {
+	cout << i << endl;
+
 	type_point delta = type_point(
 		trajectory[i].x - trajectory[i - 1].x,
 		trajectory[i].y - trajectory[i - 1].y,
@@ -400,8 +402,29 @@ void calculateNormals(int i) {
 		+ triangle.points[1].z * ratios[i].kz + delta.z + triangle.points[0].z * ratios[i].kz + delta.z) / 4;
 
 	glBegin(GL_LINES);
-	glVertex3f(center.x, center.y, center.z);
-	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
+	for (int j = 0; j < 2; j++)
+	{
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx,
+			triangle.points[j].y * ratios[i - 1].ky,
+			triangle.points[j].z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx + norm.x * 10,
+			triangle.points[j].y * ratios[i - 1].ky + norm.y * 10,
+			triangle.points[j].z + norm.z * 10
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x,
+			triangle.points[j].y * ratios[i].ky + delta.y,
+			triangle.points[j].z + delta.z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x + norm.x * 10,
+			triangle.points[j].y * ratios[i].ky + delta.y + norm.x * 10,
+			triangle.points[j].z + delta.z + norm.x * 10
+		);
+	}
 	glEnd();
 
 	vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
@@ -413,16 +436,30 @@ void calculateNormals(int i) {
 	);
 	norm = Normal(vec1, vec2, vec3);
 
-	center.x = (triangle.points[0].x * ratios[i - 1].kx + triangle.points[2].x * ratios[i - 1].kx
-		+ triangle.points[2].x * ratios[i].kx + delta.x + triangle.points[0].x * ratios[i].kx + delta.x) / 4;
-	center.y = (triangle.points[0].y * ratios[i - 1].ky + triangle.points[2].y * ratios[i - 1].ky
-		+ triangle.points[2].y * ratios[i].ky + delta.y + triangle.points[0].y * ratios[i].ky + delta.y) / 4;
-	center.z = (triangle.points[0].z * ratios[i - 1].kz + triangle.points[2].z * ratios[i - 1].kz
-		+ triangle.points[2].z * ratios[i].kz + delta.z + triangle.points[0].z * ratios[i].kz + delta.z) / 4;
-
 	glBegin(GL_LINES);
-	glVertex3f(center.x, center.y, center.z);
-	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
+	for (int j = 0; j < 3; j += 2)
+	{
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx,
+			triangle.points[j].y * ratios[i - 1].ky,
+			triangle.points[j].z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx + norm.x * 10,
+			triangle.points[j].y * ratios[i - 1].ky + norm.y * 10,
+			triangle.points[j].z + norm.z * 10
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x,
+			triangle.points[j].y * ratios[i].ky + delta.y,
+			triangle.points[j].z + delta.z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x + norm.x * 10,
+			triangle.points[j].y * ratios[i].ky + delta.y + norm.x * 10,
+			triangle.points[j].z + delta.z + norm.x * 10
+		);
+	}
 	glEnd();
 
 	vec1 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
@@ -434,16 +471,30 @@ void calculateNormals(int i) {
 	);
 	norm = Normal(vec1, vec2, vec3);
 
-	center.x = (triangle.points[2].x * ratios[i - 1].kx + triangle.points[1].x * ratios[i - 1].kx
-		+ triangle.points[1].x * ratios[i].kx + delta.x + triangle.points[2].x * ratios[i].kx + delta.x) / 4;
-	center.y = (triangle.points[2].y * ratios[i - 1].ky + triangle.points[1].y * ratios[i - 1].ky
-		+ triangle.points[1].y * ratios[i].ky + delta.y + triangle.points[2].y * ratios[i].ky + delta.y) / 4;
-	center.z = (triangle.points[2].z * ratios[i - 1].kz + triangle.points[1].z * ratios[i - 1].kz
-		+ triangle.points[1].z * ratios[i].kz + delta.z + triangle.points[2].z * ratios[i].kz + delta.z) / 4;
-
 	glBegin(GL_LINES);
-	glVertex3f(center.x, center.y, center.z);
-	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
+	for (int j = 1; j < 3; j++)
+	{
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx,
+			triangle.points[j].y * ratios[i - 1].ky,
+			triangle.points[j].z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i - 1].kx + norm.x * 10,
+			triangle.points[j].y * ratios[i - 1].ky + norm.y * 10,
+			triangle.points[j].z + norm.z * 10
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x,
+			triangle.points[j].y * ratios[i].ky + delta.y,
+			triangle.points[j].z + delta.z
+		);
+		glVertex3f(
+			triangle.points[j].x * ratios[i].kx + delta.x + norm.x * 10,
+			triangle.points[j].y * ratios[i].ky + delta.y + norm.x * 10,
+			triangle.points[j].z + delta.z + norm.x * 10
+		);
+	}
 	glEnd();
 }
 
@@ -525,14 +576,12 @@ void Display() {
 		Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
 		Vector3f norm = Normal(vec1, vec2, vec3);
 
-		type_point temp;
-		temp.x = (triangle.points[0].x + triangle.points[1].x + triangle.points[2].x) / 3;
-		temp.y = (triangle.points[0].y + triangle.points[1].y + triangle.points[2].y) / 3;
-		temp.z = (triangle.points[0].z + triangle.points[1].z + triangle.points[2].z) / 3;
-
 		glBegin(GL_LINES);
-		glVertex3f(temp.x, temp.y, temp.z);
-		glVertex3f(temp.x + norm.x * 10, temp.y + norm.y * 10, temp.z + norm.z * 10);
+		for (int i = 0; i < 3; i++)
+		{
+			glVertex3f(triangle.points[i].x, triangle.points[i].y, triangle.points[i].z);
+			glVertex3f(triangle.points[i].x + norm.x * 10, triangle.points[i].y + norm.y * 10, triangle.points[i].z + norm.z * 10);
+		}
 		glEnd();
 	}
 
@@ -603,14 +652,12 @@ void Display() {
 		Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
 		Vector3f norm = Normal(vec1, vec2, vec3);
 
-		type_point temp;
-		temp.x = (triangle.points[0].x + triangle.points[1].x + triangle.points[2].x) / 3;
-		temp.y = (triangle.points[0].y + triangle.points[1].y + triangle.points[2].y) / 3;
-		temp.z = (triangle.points[0].z + triangle.points[1].z + triangle.points[2].z) / 3;
-
 		glBegin(GL_LINES);
-		glVertex3f(temp.x, temp.y, temp.z);
-		glVertex3f(temp.x + norm.x * 10, temp.y + norm.y * 10, -(temp.z + norm.z * 10));
+		for (int i = 0; i < 3; i++)
+		{
+			glVertex3f(triangle.points[i].x, triangle.points[i].y, triangle.points[i].z);
+			glVertex3f(triangle.points[i].x + norm.x * 10, triangle.points[i].y + norm.y * 10, -(triangle.points[i].z + norm.z * 10));
+		}
 		glEnd();
 	}
 
