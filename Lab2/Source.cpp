@@ -80,9 +80,10 @@ vector<ratio> tempRatios = {};
 vector<type_point> trajectory = {};
 vector<ratio> ratios = {};
 
-int light_sample = 2;
+int light_sample = 1;
 bool isTexturingEnabled = true;
 bool isSkeletonViewEnabled = true;
+bool isNormalsShowing = false;
 bool isPerspectiveViewEnabled = true;
 
 //Вычисление нормали двух векторов
@@ -136,8 +137,8 @@ Vector3f Vector(Vector3f _Point1, Vector3f _Point2)
 //Вычисление нормали полигона
 Vector3f Normal(Vector3f _1, Vector3f _2, Vector3f _3)
 {
-	Vector3f _Vector1 = Vector(_3, _2);
-	Vector3f _Vector2 = Vector(_2, _1);
+	Vector3f _Vector1 = Vector(_2, _1);
+	Vector3f _Vector2 = Vector(_3, _2);
 	Vector3f _Normal = Cross(_Vector1, _Vector2);
 	_Normal = Normalize(_Normal);
 	return _Normal;
@@ -374,87 +375,76 @@ void GenerateModel()
 	}
 }
 
-void calculateNormals() {
+void calculateNormals(int i) {
+	type_point delta = type_point(
+		trajectory[i].x - trajectory[i - 1].x,
+		trajectory[i].y - trajectory[i - 1].y,
+		trajectory[i].z - trajectory[i - 1].z
+	);
 
-	Vector3f vec1 = Vector3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
-	Vector3f vec2 = Vector3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
-	Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
-	Vector3f norm = Normal(vec1, vec2, vec3);
+	Vector3f vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+	Vector3f vec2 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+	Vector3f vec3 = Vector3f(
+		triangle.points[1].x * ratios[i].kx + delta.x,
+		triangle.points[1].y * ratios[i].ky + delta.y,
+		triangle.points[1].z + delta.z
+	);
+	Vector3f norm = Normal(vec3, vec2, vec1);
+
+	type_point center;
+	center.x = (triangle.points[0].x * ratios[i - 1].kx + triangle.points[1].x * ratios[i - 1].kx
+		+ triangle.points[1].x * ratios[i].kx + delta.x + triangle.points[0].x * ratios[i].kx + delta.x) / 4;
+	center.y = (triangle.points[0].y * ratios[i - 1].ky + triangle.points[1].y * ratios[i - 1].ky
+		+ triangle.points[1].y * ratios[i].ky + delta.y + triangle.points[0].y * ratios[i].ky + delta.y) / 4;
+	center.z = (triangle.points[0].z * ratios[i - 1].kz + triangle.points[1].z * ratios[i - 1].kz
+		+ triangle.points[1].z * ratios[i].kz + delta.z + triangle.points[0].z * ratios[i].kz + delta.z) / 4;
 
 	glBegin(GL_LINES);
-	glVertex3f(vec1.x, vec1.y, vec1.z);
-	glVertex3f(vec1.x + norm.x * 10, vec1.y + norm.y * 10, vec1.z + norm.z * 10);
+	glVertex3f(center.x, center.y, center.z);
+	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
 	glEnd();
 
-	for (int i = 1; i < trajectory.size(); i++)
-	{
-		type_point delta = type_point(
-			trajectory[i].x - trajectory[i - 1].x,
-			trajectory[i].y - trajectory[i - 1].y,
-			trajectory[i].z - trajectory[i - 1].z
-			);
-
-		vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
-		vec2 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
-
-		vec3 = Vector3f(
-			triangle.points[1].x * ratios[i].kx + delta.x,
-			triangle.points[1].y * ratios[i].ky + delta.y,
-			triangle.points[1].z + delta.z
-			);
-		norm = Normal(vec2, vec1, vec3);
-
-		glBegin(GL_LINES);
-		glVertex3f(vec3.x, vec3.y, vec3.z);
-		glVertex3f(vec3.x + norm.x * 10, vec3.y + norm.y * 10, vec3.z + norm.z * 10);
-		glEnd();
-
-		Vector3f(
-			triangle.points[0].x * ratios[i].kx + delta.x,
-			triangle.points[0].y * ratios[i].ky + delta.y,
-			triangle.points[0].z + delta.z
-			);
-
-		vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
-		vec2 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
-		vec3 = Vector3f(
-			triangle.points[2].x * ratios[i].kx + delta.x,
-			triangle.points[2].y * ratios[i].ky + delta.y,
-			triangle.points[2].z + delta.z
-			);
-		norm = Normal(vec1, vec2, vec3);
-
-			glBegin(GL_LINES);
-	glVertex3f(vec3.x, vec3.y, vec3.z);
-	glVertex3f(vec3.x + norm.x * 10, vec3.y + norm.y * 10, vec3.z + norm.z * 10);
-	glEnd();
-
-		Vector3f(
-			triangle.points[0].x * ratios[i].kx + delta.x,
-			triangle.points[0].y * ratios[i].ky + delta.y,
-			triangle.points[0].z + delta.z
-			);
-
-		vec1 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
-		vec2 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
-		vec3 = Vector3f(
-			triangle.points[2].x * ratios[i].kx + delta.x,
-			triangle.points[2].y * ratios[i].ky + delta.y,
-			triangle.points[2].z + delta.z
-			);
-		norm = Normal(vec1, vec2, vec3);
-
-		Vector3f(
-			triangle.points[1].x * ratios[i].kx + delta.x,
-			triangle.points[1].y * ratios[i].ky + delta.y,
-			triangle.points[1].z + delta.z
-			);
-	}
-
-	vec1 = Vector3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
-	vec2 = Vector3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
-	vec3 = Vector3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
+	vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+	vec2 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+	vec3 = Vector3f(
+		triangle.points[2].x * ratios[i].kx + delta.x,
+		triangle.points[2].y * ratios[i].ky + delta.y,
+		triangle.points[2].z + delta.z
+	);
 	norm = Normal(vec1, vec2, vec3);
+
+	center.x = (triangle.points[0].x * ratios[i - 1].kx + triangle.points[2].x * ratios[i - 1].kx
+		+ triangle.points[2].x * ratios[i].kx + delta.x + triangle.points[0].x * ratios[i].kx + delta.x) / 4;
+	center.y = (triangle.points[0].y * ratios[i - 1].ky + triangle.points[2].y * ratios[i - 1].ky
+		+ triangle.points[2].y * ratios[i].ky + delta.y + triangle.points[0].y * ratios[i].ky + delta.y) / 4;
+	center.z = (triangle.points[0].z * ratios[i - 1].kz + triangle.points[2].z * ratios[i - 1].kz
+		+ triangle.points[2].z * ratios[i].kz + delta.z + triangle.points[0].z * ratios[i].kz + delta.z) / 4;
+
+	glBegin(GL_LINES);
+	glVertex3f(center.x, center.y, center.z);
+	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
+	glEnd();
+
+	vec1 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+	vec2 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+	vec3 = Vector3f(
+		triangle.points[1].x * ratios[i].kx + delta.x,
+		triangle.points[1].y * ratios[i].ky + delta.y,
+		triangle.points[1].z + delta.z
+	);
+	norm = Normal(vec1, vec2, vec3);
+
+	center.x = (triangle.points[2].x * ratios[i - 1].kx + triangle.points[1].x * ratios[i - 1].kx
+		+ triangle.points[1].x * ratios[i].kx + delta.x + triangle.points[2].x * ratios[i].kx + delta.x) / 4;
+	center.y = (triangle.points[2].y * ratios[i - 1].ky + triangle.points[1].y * ratios[i - 1].ky
+		+ triangle.points[1].y * ratios[i].ky + delta.y + triangle.points[2].y * ratios[i].ky + delta.y) / 4;
+	center.z = (triangle.points[2].z * ratios[i - 1].kz + triangle.points[1].z * ratios[i - 1].kz
+		+ triangle.points[1].z * ratios[i].kz + delta.z + triangle.points[2].z * ratios[i].kz + delta.z) / 4;
+
+	glBegin(GL_LINES);
+	glVertex3f(center.x, center.y, center.z);
+	glVertex3f(center.x + norm.x * 10, center.y + norm.y * 10, center.z + norm.z * 10);
+	glEnd();
 }
 
 /* Initialize OpenGL Graphics */
@@ -484,7 +474,7 @@ void Display() {
 
 	gluLookAt(
 		spectator.x, spectator.y, spectator.z,
-		0, 0, 0,
+		0, 50, 0,
 		0, 100, 0
 	);
 
@@ -520,12 +510,31 @@ void Display() {
 		trajectory[0].y,
 		trajectory[0].z
 	);
+
 	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glColorHex("#91edea");
 	glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
 	glTexCoord2f(.05, .1); glVertex3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
 	glTexCoord2f(.1, 0); glVertex3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
 	glEnd();
+
+	if (isNormalsShowing)
+	{
+		Vector3f vec1 = Vector3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
+		Vector3f vec2 = Vector3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
+		Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
+		Vector3f norm = Normal(vec1, vec2, vec3);
+
+		type_point temp;
+		temp.x = (triangle.points[0].x + triangle.points[1].x + triangle.points[2].x) / 3;
+		temp.y = (triangle.points[0].y + triangle.points[1].y + triangle.points[2].y) / 3;
+		temp.z = (triangle.points[0].z + triangle.points[1].z + triangle.points[2].z) / 3;
+
+		glBegin(GL_LINES);
+		glVertex3f(temp.x, temp.y, temp.z);
+		glVertex3f(temp.x + norm.x * 10, temp.y + norm.y * 10, temp.z + norm.z * 10);
+		glEnd();
+	}
 
 	for (int i = 1; i < trajectory.size(); i++)
 	{
@@ -581,10 +590,29 @@ void Display() {
 		);
 		glEnd();
 
+		if (isNormalsShowing)
+			calculateNormals(i);
+
 		glTranslatef(delta.x, delta.y, delta.z);
 	}
 
-	calculateNormals();
+	if (isNormalsShowing)
+	{
+		Vector3f vec1 = Vector3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
+		Vector3f vec2 = Vector3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
+		Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
+		Vector3f norm = Normal(vec1, vec2, vec3);
+
+		type_point temp;
+		temp.x = (triangle.points[0].x + triangle.points[1].x + triangle.points[2].x) / 3;
+		temp.y = (triangle.points[0].y + triangle.points[1].y + triangle.points[2].y) / 3;
+		temp.z = (triangle.points[0].z + triangle.points[1].z + triangle.points[2].z) / 3;
+
+		glBegin(GL_LINES);
+		glVertex3f(temp.x, temp.y, temp.z);
+		glVertex3f(temp.x + norm.x * 10, temp.y + norm.y * 10, -(temp.z + norm.z * 10));
+		glEnd();
+	}
 
 	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
@@ -592,13 +620,22 @@ void Display() {
 	glTexCoord2f(.1, 0); glVertex3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
 	glEnd();
 
+	//vec1 = Vector3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
+	//vec2 = Vector3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
+	//vec3 = Vector3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
+	//norm = Normal(vec1, vec2, vec3);
+
+	//glBegin(GL_LINES);
+	//glVertex3f(vec1.x, vec1.y, vec1.z);
+	//glVertex3f(vec1.x + norm.x * 10, vec1.y + norm.y * 10, vec1.z + norm.z * 10);
+	//glEnd();
+
 	//отключить все источники
 	glDisable(GL_LIGHT0);
 	glDisable(GL_LIGHT1);
 	glDisable(GL_LIGHT2);
 	glDisable(GL_LIGHT3);
 	glDisable(GL_LIGHT4);
-
 
 	//отключить текстурирование
 	glDisable(GL_TEXTURE_2D);
@@ -643,6 +680,7 @@ void Keyboard(unsigned char key, int x, int y)
 	}
 
 	if (key == 't') isTexturingEnabled = !isTexturingEnabled;
+	if (key == 'n') isNormalsShowing = !isNormalsShowing;
 
 	if (key == '1') light_sample = 1;
 	if (key == '2') light_sample = 2;
