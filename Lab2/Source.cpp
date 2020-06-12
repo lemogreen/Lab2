@@ -10,6 +10,44 @@
 
 using namespace std;
 
+class Vector3f
+{
+public:
+	float x, y, z;
+
+	Vector3f() {};							//конструктор по умолчанию
+	Vector3f(float _x, float _y, float _z)	//конструктор
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+
+	//Переопределение оператора +
+	Vector3f operator + (Vector3f _Vector)
+	{
+		return Vector3f(_Vector.x + x, _Vector.y + y, _Vector.z + z);
+	}
+	//Переопределение оператора -
+	Vector3f operator - (Vector3f _Vector)
+	{
+		return Vector3f(x - _Vector.x, y - _Vector.y, z - _Vector.z);
+	}
+
+	//Переопределение оператора *
+	Vector3f operator * (float num)
+	{
+		return Vector3f(x * num, y * num, z * num);
+	}
+
+	//Переопределение оператора /
+	Vector3f operator / (float num)
+	{
+		return Vector3f(x / num, y / num, z / num);
+	}
+};
+
+
 struct type_point
 {
 	GLint x, y, z;
@@ -46,6 +84,64 @@ int light_sample = 2;
 bool isTexturingEnabled = true;
 bool isSkeletonViewEnabled = true;
 bool isPerspectiveViewEnabled = true;
+
+//Вычисление нормали двух векторов
+Vector3f Cross(Vector3f _Vec1, Vector3f _Vec2)
+{
+	Vector3f _Normal;
+
+	//вычисление векторного произведения
+	_Normal.x = ((_Vec1.y * _Vec2.z) - (_Vec1.z * _Vec2.y));
+	_Normal.y = ((_Vec1.z * _Vec2.x) - (_Vec1.x * _Vec2.z));
+	_Normal.z = ((_Vec1.x * _Vec2.y) - (_Vec1.y * _Vec2.x));
+
+	return _Normal;
+}
+
+//Вычисление нормы вектора
+float Norm(Vector3f _Vec)
+{
+	return (float)sqrt((_Vec.x * _Vec.x) + (_Vec.y * _Vec.y) + (_Vec.z * _Vec.z));
+}
+
+//Нормализация вектора
+Vector3f Normalize(Vector3f _Vec)
+{
+	//Вычислить норму вектора
+	float norm = Norm(_Vec);
+
+	//нормализовать вектор
+	_Vec = _Vec / norm;
+
+	return _Vec;
+}
+
+//Вычисление скалярного произведения
+float scalar(Vector3f _Vec1, Vector3f _Vec2)
+{
+	return _Vec1.x * _Vec2.x + _Vec1.y * _Vec2.y + _Vec1.z * _Vec2.z;
+}
+
+//Вектор между двумя точками
+Vector3f Vector(Vector3f _Point1, Vector3f _Point2)
+{
+	Vector3f _Vector;
+
+	_Vector.x = _Point1.x - _Point2.x;
+	_Vector.y = _Point1.y - _Point2.y;
+	_Vector.z = _Point1.z - _Point2.z;
+	return _Vector;
+}
+
+//Вычисление нормали полигона
+Vector3f Normal(Vector3f _1, Vector3f _2, Vector3f _3)
+{
+	Vector3f _Vector1 = Vector(_3, _2);
+	Vector3f _Vector2 = Vector(_2, _1);
+	Vector3f _Normal = Cross(_Vector1, _Vector2);
+	_Normal = Normalize(_Normal);
+	return _Normal;
+}
 
 void CreateLight()
 {
@@ -278,6 +374,89 @@ void GenerateModel()
 	}
 }
 
+void calculateNormals() {
+
+	Vector3f vec1 = Vector3f(triangle.points[0].x * ratios[0].kx, triangle.points[0].y * ratios[0].ky, triangle.points[0].z);
+	Vector3f vec2 = Vector3f(triangle.points[1].x * ratios[0].kx, triangle.points[1].y * ratios[0].ky, triangle.points[1].z);
+	Vector3f vec3 = Vector3f(triangle.points[2].x * ratios[0].kx, triangle.points[2].y * ratios[0].ky, triangle.points[2].z);
+	Vector3f norm = Normal(vec1, vec2, vec3);
+
+	glBegin(GL_LINES);
+	glVertex3f(vec1.x, vec1.y, vec1.z);
+	glVertex3f(vec1.x + norm.x * 10, vec1.y + norm.y * 10, vec1.z + norm.z * 10);
+	glEnd();
+
+	for (int i = 1; i < trajectory.size(); i++)
+	{
+		type_point delta = type_point(
+			trajectory[i].x - trajectory[i - 1].x,
+			trajectory[i].y - trajectory[i - 1].y,
+			trajectory[i].z - trajectory[i - 1].z
+			);
+
+		vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+		vec2 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+
+		vec3 = Vector3f(
+			triangle.points[1].x * ratios[i].kx + delta.x,
+			triangle.points[1].y * ratios[i].ky + delta.y,
+			triangle.points[1].z + delta.z
+			);
+		norm = Normal(vec2, vec1, vec3);
+
+		glBegin(GL_LINES);
+		glVertex3f(vec3.x, vec3.y, vec3.z);
+		glVertex3f(vec3.x + norm.x * 10, vec3.y + norm.y * 10, vec3.z + norm.z * 10);
+		glEnd();
+
+		Vector3f(
+			triangle.points[0].x * ratios[i].kx + delta.x,
+			triangle.points[0].y * ratios[i].ky + delta.y,
+			triangle.points[0].z + delta.z
+			);
+
+		vec1 = Vector3f(triangle.points[0].x * ratios[i - 1].kx, triangle.points[0].y * ratios[i - 1].ky, triangle.points[0].z);
+		vec2 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+		vec3 = Vector3f(
+			triangle.points[2].x * ratios[i].kx + delta.x,
+			triangle.points[2].y * ratios[i].ky + delta.y,
+			triangle.points[2].z + delta.z
+			);
+		norm = Normal(vec1, vec2, vec3);
+
+			glBegin(GL_LINES);
+	glVertex3f(vec3.x, vec3.y, vec3.z);
+	glVertex3f(vec3.x + norm.x * 10, vec3.y + norm.y * 10, vec3.z + norm.z * 10);
+	glEnd();
+
+		Vector3f(
+			triangle.points[0].x * ratios[i].kx + delta.x,
+			triangle.points[0].y * ratios[i].ky + delta.y,
+			triangle.points[0].z + delta.z
+			);
+
+		vec1 = Vector3f(triangle.points[1].x * ratios[i - 1].kx, triangle.points[1].y * ratios[i - 1].ky, triangle.points[1].z);
+		vec2 = Vector3f(triangle.points[2].x * ratios[i - 1].kx, triangle.points[2].y * ratios[i - 1].ky, triangle.points[2].z);
+		vec3 = Vector3f(
+			triangle.points[2].x * ratios[i].kx + delta.x,
+			triangle.points[2].y * ratios[i].ky + delta.y,
+			triangle.points[2].z + delta.z
+			);
+		norm = Normal(vec1, vec2, vec3);
+
+		Vector3f(
+			triangle.points[1].x * ratios[i].kx + delta.x,
+			triangle.points[1].y * ratios[i].ky + delta.y,
+			triangle.points[1].z + delta.z
+			);
+	}
+
+	vec1 = Vector3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
+	vec2 = Vector3f(triangle.points[1].x, triangle.points[1].y, triangle.points[1].z);
+	vec3 = Vector3f(triangle.points[2].x, triangle.points[2].y, triangle.points[2].z);
+	norm = Normal(vec1, vec2, vec3);
+}
+
 /* Initialize OpenGL Graphics */
 void initGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
@@ -336,7 +515,6 @@ void Display() {
 		glVertex3f(-500, 0, 50 * i);
 	}
 	glEnd();
-
 	glTranslatef(
 		trajectory[0].x,
 		trajectory[0].y,
@@ -405,6 +583,8 @@ void Display() {
 
 		glTranslatef(delta.x, delta.y, delta.z);
 	}
+
+	calculateNormals();
 
 	glBegin((isSkeletonViewEnabled) ? GL_LINE_LOOP : GL_TRIANGLES);
 	glTexCoord2f(0, .1); glVertex3f(triangle.points[0].x, triangle.points[0].y, triangle.points[0].z);
